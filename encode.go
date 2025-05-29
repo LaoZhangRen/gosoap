@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 var (
@@ -107,8 +108,28 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 	case reflect.String:
 		content := xml.CharData(v.String())
 		tokens.data = append(tokens.data, content)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// Fix: Add support for int types
+		content := xml.CharData(strconv.FormatInt(v.Int(), 10))
+		tokens.data = append(tokens.data, content)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		// Fix: Add support for uint types
+		content := xml.CharData(strconv.FormatUint(v.Uint(), 10))
+		tokens.data = append(tokens.data, content)
+	case reflect.Float32, reflect.Float64:
+		// Fix: Add support for float types
+		content := xml.CharData(strconv.FormatFloat(v.Float(), 'f', -1, 64))
+		tokens.data = append(tokens.data, content)
+	case reflect.Bool:
+		// Fix: Add support for bool type
+		content := xml.CharData(strconv.FormatBool(v.Bool()))
+		tokens.data = append(tokens.data, content)
 	case reflect.Struct:
 		tokens.data = append(tokens.data, v.Interface())
+	default:
+		// Fix: Handle other types by converting to string
+		content := xml.CharData(fmt.Sprintf("%v", v.Interface()))
+		tokens.data = append(tokens.data, content)
 	}
 }
 
