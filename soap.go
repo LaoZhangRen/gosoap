@@ -203,7 +203,7 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
 	res = &Response{
 		Body:    soap.Body.Contents,
 		Header:  soap.Header.Contents,
-		Payload: p.Payload,
+		Payload: b, // Fix: Use server response instead of request payload
 	}
 	if err != nil {
 		return res, ErrorWithPayload{err, p.Payload}
