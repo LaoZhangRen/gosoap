@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 var (
-	soapPrefix = "soap"
+	soapPrefix                            = "soap"
 	customEnvelopeAttrs map[string]string = nil
 )
 
@@ -125,7 +126,24 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 		content := xml.CharData(strconv.FormatBool(v.Bool()))
 		tokens.data = append(tokens.data, content)
 	case reflect.Struct:
-		tokens.data = append(tokens.data, v.Interface())
+		for i := 0; i < v.NumField(); i++ {
+			field := v.Field(i)
+			var name string
+			name = v.Type().Field(i).Tag.Get("xml")
+			if name == "" {
+				name = v.Type().Field(i).Name
+				name = strings.ToLower(name[0:1]) + name[1:]
+			}
+			t := xml.StartElement{
+				Name: xml.Name{
+					Space: "",
+					Local: name,
+				},
+			}
+			tokens.data = append(tokens.data, t)
+			tokens.recursiveEncode(field.Interface())
+			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
+		}
 	default:
 		// Fix: Handle other types by converting to string
 		content := xml.CharData(fmt.Sprintf("%v", v.Interface()))
@@ -151,7 +169,7 @@ func (tokens *tokenData) startEnvelope() {
 		e.Attr = make([]xml.Attr, 0)
 		for local, value := range customEnvelopeAttrs {
 			e.Attr = append(e.Attr, xml.Attr{
-				Name: xml.Name{Space: "", Local: local},
+				Name:  xml.Name{Space: "", Local: local},
 				Value: value,
 			})
 		}
