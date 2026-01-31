@@ -31,11 +31,20 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	}
 
 	namespace := ""
-	if c.Client.Definitions.Types != nil {
-		schema := c.Client.Definitions.Types[0].XsdSchema[0]
-		namespace = c.Client.Definitions.TargetNamespace
-		if namespace == "" && len(schema.Imports) > 0 {
-			namespace = schema.Imports[0].Namespace
+	// 1. 检查 Types 是否存在且不为空
+	if c.Client.Definitions.Types != nil && len(c.Client.Definitions.Types) > 0 {
+		// 2. 检查该 Type 下是否有 Schema 定义
+		if len(c.Client.Definitions.Types[0].XsdSchema) > 0 {
+			schema := c.Client.Definitions.Types[0].XsdSchema[0]
+			namespace = c.Client.Definitions.TargetNamespace
+
+			// 3. 检查 Imports 是否存在
+			if namespace == "" && len(schema.Imports) > 0 {
+				namespace = schema.Imports[0].Namespace
+			}
+		} else {
+			// 如果没有 Schema，回退到使用 TargetNamespace
+			namespace = c.Client.Definitions.TargetNamespace
 		}
 	}
 
