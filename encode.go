@@ -261,13 +261,29 @@ func (tokens *tokenData) startBody(m, n string) error {
 		return fmt.Errorf("method or namespace is empty")
 	}
 
+	prefix := ""
+	localName := m
+	if strings.Contains(m, ":") {
+		parts := strings.SplitN(m, ":", 2)
+		prefix = parts[0]
+	} else {
+		// 默认强制使用 tns 前缀，确保输出 <tns:Method xmlns:tns="...">
+		prefix = "tns"
+		localName = prefix + ":" + m
+	}
+
+	attrName := "xmlns"
+	if prefix != "" {
+		attrName = "xmlns:" + prefix
+	}
+
 	r := xml.StartElement{
 		Name: xml.Name{
 			Space: "",
-			Local: m,
+			Local: localName,
 		},
 		Attr: []xml.Attr{
-			{Name: xml.Name{Space: "", Local: "xmlns"}, Value: n},
+			{Name: xml.Name{Space: "", Local: attrName}, Value: n},
 		},
 	}
 
